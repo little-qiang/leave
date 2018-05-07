@@ -281,12 +281,19 @@
 └── YarModule.php
 ```
 
+### 数据库新增表
+1. ![][img_dbList1]
+2. ![][img_dbList2]
+3. ![][img_dbList3]
+4. 注意删除表单默认的密码，更新之后需要清除 redis
+
 ### 前台路由配置
 
 1. ![][img_router1]
 2. ![][img_router2]
 3. 具体参数参考 [yaf 官方文档][url_yaf] `路由和路由协议设置`
-
+4. PS: routes.coupons.map.1= 字段不能省略, 可结合前端\web\application\controllers\Error.php 捕获异常
+5. ![][img_router3]
 
 ## 几点小建议
 
@@ -300,8 +307,12 @@
 [url_yar]: http://php.net/manual/zh/book.yar.php   "Yar"
 [url_yii1]: http://www.yiichina.com/doc/guide/1.1   "yii1.1"
 [url_psr2]: https://laravel-china.org/docs/psr/psr-2-coding-style-guide
+[img_dbList1]: imgs/dbList1.png
+[img_dbList2]: imgs/dbList2.png
+[img_dbList3]: imgs/dbList3.png
 [img_router1]: imgs/router1.png
 [img_router2]: imgs/router2.png
+[img_router3]: imgs/router3.png
 [img_editorconfig]: imgs/editorconfig.png
 
 
