@@ -1,5 +1,14 @@
 [TOC]
 
+---
+> 本文档不一定正确, 仅供参考, 以具体代码和环境为准
+> 
+> 本文档不一定正确, 仅供参考, 以具体代码和环境为准
+> 
+> 本文档不一定正确, 仅供参考, 以具体代码和环境为准
+
+---
+
 # 分站
 
 ## 前台
@@ -228,19 +237,95 @@
 >> 
 >> 有一种情况, 如果用户在创建订单之后不支付, 然后点击订单继续购买会恢复卡券的使用状态
 >> 
->> `\web\library\M\Coupon.php @buy_againAction`
+>> `\web\application\modules\User\controllers\Order.php @buy_againAction`
 
 ![][img_coupon5]
->> `\web\application\modules\User\controllers\Order.php @recoverCoupon`
+>> `\web\library\M\Coupon.php @recoverCoupon`
 
 ![][img_coupon6]
 > 3.个人中心，显示当前用户的卡券列表, 
 >> 这个功能比较简单, 获取当前用户所有的优惠券然后判断是否过期, 是否可用
 >> 需要注意一个地方, 卡券是否可用的状态在前台 有的是按图片显示 有的是按文字显示
-> 4.卡券领取页面
-> 5.注册送卡券
-> 6.订阅送卡券
 
+> 4.卡券领取页面
+>> 逻辑很简单, 查看 `\web\library\M\Coupon.php @waitGetCouponList` 
+
+> 5.注册送卡券
+>> 逻辑很简单, 查看 `\web\library\M\Coupon.php @activate` 
+
+> 6.订阅送卡券
+>> 逻辑很简单, 查看 `\web\library\M\Coupon.php @newCoupon4User`
+
+### Smarty
+> 前台视图层采用 Smarty, 稍微有一些封装, 大体与 [Smarty 官网][url_smarty]用法一致
+> 
+> 核心共主要包含两个文件: `\web\library\Ext\View\Smarty.php, \web\library\Ext\View\SmartyRedis.php`
+> 在后台有两个地方可以动态设置 视图代码
+> 
+> 1.视图公共 Smarty 代码 如： Header, Nav, Footer
+> 
+> `\web\library\Lib\lib_main.php`
+
+![][img_smarty1]
+![][img_smarty2]
+> 2.专题页面的Html设置, 会保存 Smarty 代码到数据库, 然后专题会读取并渲染数据
+
+![][img_smarty3]
+> `\web\application\modules\Specials\controllers\Promotions.php`
+> 
+
+![][img_smarty4]
+
+### 广告
+> 广告主要涉及到3张表：
+> 1.ad_position 广告位置
+
+![][img_ad1]
+> 2.ad 广告详情
+
+![][img_ad2]
+> 3.ad_custom 首页banner
+> 
+> 业务主要用在首页, 代码很简单, 后台存, 前台读, 目前前台显示有两种方式,
+>  
+> 一种是直接在contrller读取数据显示, 还一种是用smarty函数标签方式获取数据库数据
+> 
+> `\web\library\Lib\lib_main.php @assign_template`
+
+![][img_ad3]
+> `\web\themes\pinkclassy\index\index.tpl`
+
+![][img_ad4]
+> `\web\library\Fuc\Smarty\insert_vessos.php @insert_ads`
+
+![][img_ad5]
+
+> 执行把对应的广告都查询出来, 一次性显示
+
+![][img_ad6]
+
+
+### 调试相关
+> 开启调试模式: url 增加 debug_aecmp=1, 代码位置: `\web\library\Pub\Debug.php`
+
+![][img_debug1]
+> 清除页面静态缓存: url 增加 key=uitbwertgbmnertuhbdxcwehdbarjff, 代码位置: `\web\application\modules\Webservice\controllers\Cache.php`
+
+![][img_debug2]
+> 后台增加表后清除mongo数据表缓存 url 增加 refresh_mongo_table_list=1, 代码位置: `\web\library\Pub\Aecmp.php`
+
+![][img_debug3]
+
+> php 测试环境目前关闭了 opcache 扩展, 线上默认开启, 如果需要代码即时生效, 需要关闭 opcach
+```
+;zend_extension = /data/service/php55/lib/php/extensions/no-debug-non-zts-20121212/opcache.so
+;opcache.memory_consumption=128
+;opcache.interned_strings_buffer=8
+;opcache.max_accelerated_files=4000
+;opcache.revalidate_freq=60
+;opcache.fast_shutdown=1
+;opcache.enable_cli=1
+```
 
 ## 后台
 > 后台采用 [yii1.1框架][url_yii1]
@@ -359,47 +444,65 @@
 ```
 
 ### 数据库新增表
-* ![][img_db1]
-* ![][img_db2]
-* redis表字段如图：
-* ![][img_db3]
-* 注意删除表单默认的密码，更新之后需要清除 redis
+> 数据库管理列表
+
+![][img_db1]
+> 编辑数据库信息
+
+![][img_db2]
+> redis表字段如图：
+
+![][img_db3]
+> 注意删除表单默认的密码，更新之后需要清除 redis
 
 ### 数据库CRUD
-* 前台如果要对数据库进行增删改操作需要编辑文件: `\webservice\protected\modules\yar\components\RpcAbs.php` 增加对应的表
-* ![][img_db4]
-* Rpc接口一般用 model 方法操作数据库, 需要导入配置的site_id, language_id 如下图
-* 因为有一些model的表名增加了站点名字的表前缀，否认会找不到对应的表，插不进数据
-* ![][img_db5]
-* ![][img_db6]
-* 前端在查询数据库的时候，前台代码文件：`\web\library\Core\MongoRecord.php` 也给条件加上了site_id, language_id两个字段, 所以最好每一张表都有site_id, language_id两个字段, 否认可能查询不到数据 或者有精力优化重构一下
-* ![][img_db7]
-* model CURD的条件可能与Yii1.1 有一点出入, 具体代码可以查看 `\webservice\protected\components\MongoCommand.php` 结合Yii1.1 文档,调试打印即可
-* ![][img_db8]
+> 前台如果要对数据库进行增删改操作需要编辑文件: `\webservice\protected\modules\yar\components\RpcAbs.php` 增加对应的表
+
+![][img_db4]
+> Rpc接口一般用 model 方法操作数据库, 需要导入配置的site_id, language_id 如下图
+> 因为有一些model的表名增加了站点名字的表前缀，否认会找不到对应的表，插不进数据
+
+![][img_db5]
+![][img_db6]
+> 前端在查询数据库的时候，前台代码文件：`\web\library\Core\MongoRecord.php` 也给条件加上了site_id, language_id两个字段, 所以最好每一张表都有site_id, language_id两个字段, 否认可能查询不到数据
+
+![][img_db7]
+> model CURD的条件可能与Yii1.1 有一点出入, 具体代码可以查看 `\webservice\protected\components\MongoCommand.php` 结合Yii1.1 文档,调试打印即可
+
+![][img_db8]
 
 ### 前台路由配置
-* ![][img_router1]
-* ![][img_router2]
-* 具体参数参考 [yaf 官方文档][url_yaf] `路由和路由协议设置`
-* PS: routes.coupons.map.1= 字段不能省略, 可结合前端 `\web\application\controllers\Error.php` 捕获异常
-* ![][img_router3]
+> 站点路由列表
+
+![][img_router1]
+> 编辑路由详情
+
+![][img_router2]
+> 具体参数参考 [yaf 官方文档][url_yaf] `路由和路由协议设置`
+> 
+> PS: routes.coupons.map.1= 字段不能省略, 可结合前端 `\web\application\controllers\Error.php` 捕获异常
+
+![][img_router3]
 
 ### 增加支付方式
-* 具体可以参考文件 `\webservice\protected\modules\master\controllers\PaymentController.php` 代码,如下
-* ![][img_payment1]
-* 可以看到只需要在 `\webservice\protected\include\payment\` 目录增加一个配置文件即可
+> 具体可以参考文件 `\webservice\protected\modules\master\controllers\PaymentController.php` 代码,如下
+
+![][img_payment1]
+> 可以看到只需要在 `\webservice\protected\include\payment\` 目录增加一个配置文件即可
     - 系统总控 -> 支付总控 -> 安装 -> 启用
     - 站点配置 -> 支付设置 -> 启用
     - 具体操作如下图
-* ![][img_payment2]
+![][img_payment2]
 
-## 服务器信息相关
+## 环境相关
 
 ### 测试服装网站站点信息
 * Fairyseason
     - ip: 10.100.1.207
     - 前台url: www.fairyseason.test.com
-    - 后台url: manage.fairyseason.test.com admin 123
+    - 后台url: manage.fairyseason.test.com
+        + username: admin
+        + password: 123
     - 前台svn: svn://10.100.1.207/svn-web/web
     - 后台svn: svn://10.100.1.207/svn-admin/webservice
     - redis: `redis-cli -h 10.100.1.207`
@@ -408,7 +511,9 @@
 * Bellelily
     - ip: 10.100.1.208
     - 前台url: www.bellelily.test.com
-    - 后台url: manage.bellelily.test.com admin 123
+    - 后台url: manage.bellelily.test.com
+        + username: admin
+        + password: 123
     - 前台svn: svn://10.100.1.208/svn-web/web
     - 后台svn: svn://10.100.1.208/svn-admin/webservice
     - redis: `redis-cli -h 10.100.1.209`
@@ -417,7 +522,9 @@
 * Chicgrace 
     - ip: 10.100.1.209
     - 前台url: www.fr.chicgrace.test.com
-    - 后台url: manage.fr.chicgrace.test.com admin 123
+    - 后台url: manage.fr.chicgrace.test.com
+        + username: admin
+        + password: 123
     - 前台svn: svn://10.100.1.209/svn-web/web
     - 后台svn: svn://10.100.1.209/svn-admin/webservice
     - redis: `redis-cli -h 10.100.1.209`
@@ -426,7 +533,9 @@
 * Plusinlove 
     - ip: 10.100.1.210
     - 前台url: www.plusinlove.test.com
-    - 后台url: manage.plusinlove.test.com admin 123
+    - 后台url: manage.plusinlove.test.com
+        + username: admin
+        + password: 123
     - 前台svn: svn://10.100.1.210/svn-web/web
     - 后台svn: svn://10.100.1.210/svn-admin/webservice
     - redis: `redis-cli -h 10.100.1.210`
@@ -435,7 +544,9 @@
 * Chicgal 
     - ip: 10.100.1.211
     - 前台url: www.chicgal.test.com
-    - 后台url: manage.chicgal.test.com admin 123
+    - 后台url: manage.chicgal.test.com
+        + username: admin
+        + password: 123
     - 前台svn: svn://10.100.1.211/svn-web/web
     - 后台svn: svn://10.100.1.211/svn-admin/webservice
     - redis: `redis-cli -h 10.100.1.211`
@@ -444,7 +555,9 @@
 * Fr.Chicgrace 
     - ip: 10.100.1.213
     - 前台url: www.fr.chicgrace.test.com www.fr.chicgrace.test.com
-    - 后台url: manage.fr.chicgrace.test.com admin 123 manage.fr.chicgrace.test.com admin 123
+    - 后台url: manage.fr.chicgrace.test.com
+        + username: admin
+        + password: 123
     - 前台svn: svn://10.100.1.213/svn-web/web
     - 后台svn: svn://10.100.1.213/svn-admin/webservice
     - redis: `redis-cli -h 10.100.1.213`
@@ -453,7 +566,9 @@
 * Pinkclassy 
     - ip: 10.100.1.214
     - 前台url: www.pinkclassy.test.com
-    - 后台url: manage.pinkclassy.test.com admin 123
+    - 后台url: manage.pinkclassy.test.com
+        + username: admin
+        + password: 123
     - 前台svn: svn://10.100.1.214/svn-web/web
     - 后台svn: svn://10.100.1.214/svn-admin/webservice
     - redis: `redis-cli -h 10.100.1.214`
@@ -521,15 +636,29 @@
     - 月: 01
     - CVV: 3709
 
+### php版本
+> 分站版本号: 5.5.38
+
+![][img_env1]
+> 分站时区：America/New_York
+
+![][img_env2]
+> 分站版本号: 7.0.16
+
+![][img_env3]
+> 分站时区：Asia/Chongqing, 这里需要注意与分站的时差, 具体代码具体分析, 分站有的地方是显示的格林威治时间, 有的地方显示纽约时间
+
+![][img_env4]
 
 
 
-# 几点小建议
 
-# 代码风格
-* 目前代码没有统一规范, 推荐 [PHP官方推荐标准 PSR-2][url_psr2]
-* 编辑器也没有统一, 有netbeans, phpstorm, sublime, vscode, 而这几个编辑器都支持插件 [editorconfig](http://editorconfig.org/) , 可以统一代码风格
-* ![][img_editorconfig]
+### 代码风格
+> 目前代码没有统一规范, 推荐 [PHP官方推荐标准 PSR-2][url_psr2]
+> 
+> 编辑器也没有统一, 有netbeans, phpstorm, sublime, vscode, 而这几个编辑器都支持插件 [editorconfig](http://editorconfig.org/) , 可以统一代码风格
+
+![][img_editorconfig]
 
 
 [url_yaf]: http://www.laruence.com/manual/   "Yaf"
@@ -542,6 +671,8 @@
 [url_paypal3]: https://developer.paypal.com/docs/api/payments/#definition-transaction
 [url_paypal4]: https://demo.paypal.com/c2/demo/navigation?merchant=bigbox&page=shoppingCart&locale.x=en_US&token=EC-7RJ48169DF2838158
 [url_paypal5]: https://www.sandbox.paypal.com
+
+[url_smarty]: https://www.smarty.net/docs/zh_CN/
 
 [img_db1]: imgs/db1.png
 [img_db2]: imgs/db2.png
@@ -566,7 +697,30 @@
 [img_coupon5]: imgs/coupon5.png
 [img_coupon6]: imgs/coupon6.png
 
+[img_smarty1]: imgs/smarty1.png
+[img_smarty2]: imgs/smarty2.png
+[img_smarty3]: imgs/smarty3.png
+[img_smarty4]: imgs/smarty4.png
+
+[img_ad1]: imgs/ad1.png
+[img_ad2]: imgs/ad2.png
+[img_ad3]: imgs/ad3.png
+[img_ad4]: imgs/ad4.png
+[img_ad5]: imgs/ad5.png
+[img_ad6]: imgs/ad6.png
+
+[img_debug1]: imgs/debug1.png
+[img_debug2]: imgs/debug2.png
+[img_debug3]: imgs/debug3.png
+
+[img_env1]: imgs/env1.png
+[img_env2]: imgs/env2.png
+[img_env3]: imgs/env3.png
+[img_env4]: imgs/env4.png
+
 [img_editorconfig]: imgs/editorconfig.png
+
+
 
 
 
